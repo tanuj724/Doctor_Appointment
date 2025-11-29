@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react'
 import { assets } from '../assets/assets_admin/assets'
 import { AdminContext } from '../context/AdminContext'
+import { DoctorContext } from '../context/DoctorContext'
 import { toast } from 'react-toastify'
 import axios from 'axios'
 
@@ -10,6 +11,7 @@ const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const { setAToken, backendUrl } = useContext(AdminContext)
+  const { setDToken } = useContext(DoctorContext)
 
   const onSubmitHandler = async (event) => {
     event.preventDefault()
@@ -21,15 +23,34 @@ const Login = () => {
         if (data.success) {
           localStorage.setItem('aToken', data.token)
           setAToken(data.token)
+          toast.success('Login successful!')
         } else {
-          toast.error(data.message)
+          toast.error(data.message || 'Invalid credentials')
         }
       } else {
-
+        // Doctor login
+        const { data } = await axios.post(backendUrl + '/api/doctor/login', { email, password })
+        if (data.success) {
+          localStorage.setItem('dToken', data.token)
+          setDToken(data.token)
+          toast.success('Doctor login successful!')
+        } else {
+          toast.error(data.message || 'Invalid doctor credentials')
+        }
       }
 
     } catch (error) {
-
+      console.error('Login error:', error)
+      if (error.response) {
+        // Server responded with error status
+        toast.error(error.response.data.message || 'Login failed')
+      } else if (error.request) {
+        // Network error
+        toast.error('Network error. Please check your connection.')
+      } else {
+        // Other error
+        toast.error('Something went wrong. Please try again.')
+      }
     }
   }
 

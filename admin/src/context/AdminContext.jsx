@@ -13,6 +13,14 @@ const AdminContextProvider = (props) => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL
 
+  // Helper function to check if appointment time has passed
+  const isAppointmentExpired = (slotDate, slotTime) => {
+    const [day, month, year] = slotDate.split('_').map(Number)
+    const [hour, minute] = slotTime.split(':').map(Number)
+    const appointmentDateTime = new Date(year, month - 1, day, hour, minute)
+    return appointmentDateTime < new Date()
+  }
+
   const getAllDoctors = async () => {
 
     try {
@@ -52,7 +60,7 @@ const AdminContextProvider = (props) => {
 
     try {
 
-      const { data } = await axios.get(backendUrl, '/api/admin/appointments', { headers: { aToken } })
+      const { data } = await axios.get(backendUrl + '/api/admin/appointments', { headers: { aToken } })
 
       if (data.success) {
         setAppointments(data.appointments)
@@ -86,6 +94,26 @@ const AdminContextProvider = (props) => {
 
   }
 
+  const completeAppointment = async (appointmentId) => {
+
+    try {
+
+      const { data } = await axios.post(backendUrl + '/api/admin/complete-appointment', { appointmentId }, { headers: { aToken } })
+
+      if (data.success) {
+        toast.success(data.message)
+        getAllAppointments()
+        getDashData() // Refresh dashboard data
+      } else {
+        toast.error(data.message)
+      }
+
+    } catch (error) {
+      toast.error(error.message)
+    }
+
+  }
+
   const getDashData = async () => {
 
     try {
@@ -100,7 +128,7 @@ const AdminContextProvider = (props) => {
       }
 
     } catch (error) {
-      toast.error(data.message)
+      toast.error(error.message)
     }
 
   }
@@ -113,7 +141,9 @@ const AdminContextProvider = (props) => {
     appointments, setAppointments,
     getAllAppointments,
     cancelAppointment,
-    dashData, getDashData
+    completeAppointment,
+    dashData, getDashData,
+    isAppointmentExpired
   }
 
   return (

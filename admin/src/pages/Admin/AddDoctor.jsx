@@ -25,13 +25,11 @@ const AddDoctor = () => {
 
     try {
 
-      if (!docImg) {
-        return toast.error('Image Not Selected!')
-      }
-
       const formData = new FormData()
 
-      formData.append('image', docImg)
+      if (docImg) {
+        formData.append('image', docImg)
+      }
       formData.append('name', name)
       formData.append('email', email)
       formData.append('password', password)
@@ -153,7 +151,7 @@ const AddDoctor = () => {
         {/* Bottom Side */}
         <div>
           <p className='mt-4 mb-2'>About Doctor</p>
-          <textarea onChange={(e) => setAbout(e.target.value)} value={about} className='w-full px-4 pt-2 border rounded' placeholder='Write about doctor' rows={5} required></textarea>
+          <textarea onChange={(e) => setAbout(e.target.value)} value={about} className='w-full px-4 pt-2 border rounded' placeholder='Write about doctor' rows={5}></textarea>
         </div>
 
       </div>

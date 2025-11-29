@@ -5,7 +5,7 @@ import { assets } from '../../assets/assets_admin/assets'
 
 const AllAppointments = () => {
 
-  const { aToken, appointments, getAllAppointments, cancelAppointment } = useContext(AdminContext)
+  const { aToken, appointments, getAllAppointments, cancelAppointment, completeAppointment, isAppointmentExpired } = useContext(AdminContext)
   const { calculateAge, slotDateFormat, currency } = useContext(AppContext)
 
   useEffect(() => {
@@ -13,6 +13,10 @@ const AllAppointments = () => {
       getAllAppointments()
     }
   }, [aToken])
+
+  useEffect(() => {
+    console.log('Appointments in AllAppointments:', appointments)
+  }, [appointments])
 
   return (
     <div className='w-full max-w-6xl m-5'>
@@ -34,25 +38,46 @@ const AllAppointments = () => {
             <p className='max-sm:hidden'>{index + 1}</p>
 
             <div className='flex items-center gap-2'>
-              <img className='w-8 rounded-full' src={item.userData.image} alt="" /> <p>{item.userData.name}</p>
+              <img className='w-8 rounded-full' src={item.userData.image || '/placeholder-user.png'} alt="" /> <p>{item.userData.name}</p>
             </div>
 
-            <p className='max-sm:hidden'>{calculateAge(item.userData.dob)}</p>
+            <p className='max-sm:hidden'>{item.userData.dob ? calculateAge(item.userData.dob) : 'N/A'}</p>
             <p>{slotDateFormat(item.slotDate)}, {item.slotTime}</p>
 
             <div className='flex items-center gap-2'>
-              <img className='w-8 rounded-full bg-gray-200' src={item.docData.image} alt="" /> <p>{item.docData.name}</p>
+              <img className='w-8 rounded-full bg-gray-200' src={item.docData.image || '/placeholder-doctor.png'} alt="" /> <p>{item.docData.name}</p>
             </div>
 
             <p>{currency}{item.amount}</p>
 
-            {
-              item.cancelled
-                ? <p className='text-red-400 text-xs font-medium'>Cancelled</p>
-                : <img onClick={() => cancelAppointment(item._id)} className='w-10 cursor-pointer' src={assets.cancel_icon} alt="" />
-            }
-
-          </div>
+            <div className='flex items-center gap-2'>
+              {
+                item.cancelled
+                  ? <p className='text-red-400 text-xs font-medium bg-red-50 px-2 py-1 rounded'>Cancelled</p>
+                  : item.isCompleted
+                    ? <p className='text-green-500 text-xs font-medium bg-green-50 px-2 py-1 rounded'>Completed</p>
+                    : isAppointmentExpired(item.slotDate, item.slotTime)
+                      ? <p className='text-orange-500 text-xs font-medium bg-orange-50 px-2 py-1 rounded'>Auto-Completed</p>
+                      : (
+                        <div className='flex gap-2'>
+                          <img
+                            onClick={() => completeAppointment(item._id)}
+                            className='w-10 cursor-pointer hover:scale-110 transition-transform'
+                            src={assets.tick_icon}
+                            alt="Complete"
+                            title="Mark as completed"
+                          />
+                          <img
+                            onClick={() => cancelAppointment(item._id)}
+                            className='w-10 cursor-pointer hover:scale-110 transition-transform'
+                            src={assets.cancel_icon}
+                            alt="Cancel"
+                            title="Cancel appointment"
+                          />
+                        </div>
+                      )
+              }
+            </div>          </div>
         ))}
 
       </div>

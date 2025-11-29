@@ -5,7 +5,7 @@ import { AppContext } from '../../context/AppContext'
 
 const Dashboard = () => {
 
-  const { aToken, cancelAppoitment, dashData, getDashData } = useContext(AdminContext)
+  const { aToken, cancelAppointment, completeAppointment, dashData, getDashData } = useContext(AdminContext)
   const { slotDateFormat } = useContext(AppContext)
 
   useEffect(() => {
@@ -32,7 +32,7 @@ const Dashboard = () => {
 
           <div>
             <p className='text-xl font-semibold text-gray-600'>{dashData.appointments}</p>
-            <p className='text-gray-400'>Appointments</p>
+            <p className='text-gray-400'>Active Appointments</p>
           </div>
         </div>
 
@@ -44,6 +44,39 @@ const Dashboard = () => {
             <p className='text-gray-400'>Patients</p>
           </div>
         </div>
+
+        {dashData.totalAppointments && (
+          <div className='flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all'>
+            <img className='w-14' src={assets.list_icon} alt="" />
+
+            <div>
+              <p className='text-xl font-semibold text-gray-600'>{dashData.totalAppointments}</p>
+              <p className='text-gray-400'>Total Bookings</p>
+            </div>
+          </div>
+        )}
+
+        {dashData.cancelledAppointments !== undefined && (
+          <div className='flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-red-100 cursor-pointer hover:scale-105 transition-all'>
+            <img className='w-14' src={assets.cancel_icon} alt="" />
+
+            <div>
+              <p className='text-xl font-semibold text-red-600'>{dashData.cancelledAppointments}</p>
+              <p className='text-gray-400'>Cancelled</p>
+            </div>
+          </div>
+        )}
+
+        {dashData.completedAppointments !== undefined && (
+          <div className='flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-green-100 cursor-pointer hover:scale-105 transition-all'>
+            <img className='w-14' src={assets.tick_icon} alt="" />
+
+            <div>
+              <p className='text-xl font-semibold text-green-600'>{dashData.completedAppointments}</p>
+              <p className='text-gray-400'>Completed</p>
+            </div>
+          </div>
+        )}
 
       </div>
 
@@ -65,11 +98,32 @@ const Dashboard = () => {
                   <p className='text-gray-600'>{slotDateFormat(item.slotDate)}</p>
                 </div>
 
-                {
-                  item.cancelled
-                    ? <p className='text-red-400 text-xs font-medium'>Cancelled</p>
-                    : <img onClick={() => cancelAppoitment(item._id)} className='w-10 cursor-pointer' src={assets.cancel_icon} alt="" />
-                }
+                <div className='flex items-center gap-2'>
+                  {
+                    item.cancelled
+                      ? <p className='text-red-400 text-xs font-medium'>Cancelled</p>
+                      : item.isCompleted
+                        ? <p className='text-green-500 text-xs font-medium'>Completed</p>
+                        : (
+                          <div className='flex gap-2'>
+                            <img
+                              onClick={() => completeAppointment(item._id)}
+                              className='w-8 cursor-pointer hover:scale-110 transition-transform'
+                              src={assets.tick_icon}
+                              alt="Complete"
+                              title="Mark as completed"
+                            />
+                            <img
+                              onClick={() => cancelAppointment(item._id)}
+                              className='w-8 cursor-pointer hover:scale-110 transition-transform'
+                              src={assets.cancel_icon}
+                              alt="Cancel"
+                              title="Cancel appointment"
+                            />
+                          </div>
+                        )
+                  }
+                </div>
 
               </div>
             ))

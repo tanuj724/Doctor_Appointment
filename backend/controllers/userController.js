@@ -38,7 +38,7 @@ const registerUser = async (req, res) => {
     const newUser = new userModel(userData)
     const user = await newUser.save()
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' })
     res.json({ success: true, token })
 
   } catch (error) {
@@ -63,7 +63,7 @@ const loginUser = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password)
 
     if (isMatch) {
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' })
       res.json({ success: true, token })
     } else {
       res.json({ success: false, message: 'Invalid Credentials' })
@@ -186,6 +186,26 @@ const listAppointment = async (req, res) => {
 
     const { userId } = req.body
     const appointments = await appointmentModel.find({ userId })
+
+    // Auto-update expired appointments to completed (if not cancelled)
+    const currentDate = new Date()
+
+    const updatePromises = appointments.map(async (appointment) => {
+      if (!appointment.cancelled && !appointment.isCompleted) {
+        const [day, month, year] = appointment.slotDate.split('_').map(Number)
+        const [appointmentHour, appointmentMinute] = appointment.slotTime.split(':').map(Number)
+        const appointmentDateTime = new Date(year, month - 1, day, appointmentHour, appointmentMinute)
+
+        // If appointment date/time has passed, mark as completed
+        if (appointmentDateTime < currentDate) {
+          await appointmentModel.findByIdAndUpdate(appointment._id, { isCompleted: true })
+          appointment.isCompleted = true // Update the local object
+        }
+      }
+      return appointment
+    })
+
+    await Promise.all(updatePromises)
 
     res.json({ success: true, appointments })
 
